@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -57,12 +59,45 @@ public class StringWeb {
                 if ("/".equals(path)) {
                     // Parse HTTP Headers
                     Map<String, String> headers = new HashMap<>();
-                    // TODO - parse request headers
+                    // Loops through headers until a blank line is found, adding them to the hashmap as we go.
+                    String line;
+                    do {
+                        line = inputReader.readLine(); //reads newline
+                        if(!line.isEmpty()){
+                            String[] split = line.split(":",2); //splits read newline into key and value
+                            headers.put(split[0],split[1].substring(1)); //adds key and value to hashmap, removing the leading space from the value
+
+                        }
+
+                    } while(!line.isEmpty());
 
                     LOGGER.info("Headers : " + headers);
 
                     String strings = "";
-                    // TODO - parse request body
+                    if("POST".equals(method)){ //Check if there's a post request and therefor a body.
+                        Map<String, String> parameters = new HashMap<>(); //Create a map to hold our parsed parameters
+                        if(headers.containsKey("Content-Length")){
+                            int length = Integer.parseInt(headers.get("Content-Length")); //Gets the body length from the header
+                            char[] buffer = new char[length];
+                            inputReader.read(buffer,0,length);
+                            String strBody = new String(buffer); //Reads the correct amount of the request into the strBody string
+                            System.out.println(strBody);
+                            for (String param : strBody.split("&")){ //Splits body into key-value paramater pairs
+                                String[] split = param.split("=",2); //Splits the paramaters into their name and value, limit 2 to ensure only one split
+                                String name = URLDecoder.decode(split[0], StandardCharsets.UTF_8); //Decodes from URL UTF8 encoding
+                                String value = URLDecoder.decode(split[1], StandardCharsets.UTF_8); //Ditto
+                                parameters.put(name,value); //Add key-value pair to hashmap
+                            }
+                        }
+
+                        strings = parameters.get("strings"); //sets the response box contents to our newly parsed contents
+                        if(parameters.containsKey("op")){ //check if an operation has been called
+                            strings = doOperation(parameters.get("op"), strings); //preforms operation if present and stores result
+
+                        }
+
+
+                    }
 
                     // build a response
                     if ("text/plain".equals(headers.get("Content-Type"))) {

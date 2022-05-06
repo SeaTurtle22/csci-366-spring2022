@@ -10,18 +10,18 @@ public class LineLengthTransformer {
     String[] _lines;
 
     public LineLengthTransformer(String strings) {
-        _lines = strings.split("\n");
+        _lines = strings.split("\n"); //Split up the text-box contents by newline
     }
 
     public String toLengths() {
-        CountDownLatch latch = new CountDownLatch(_lines.length);
+        CountDownLatch latch = new CountDownLatch(_lines.length); //creates a latch that ensures that the main thread will wait until every line is processed
         for (int i = 0; i < _lines.length; i++) {
             String line = _lines[i];
-            LineLengthCalculator lineLengthCalculator = new LineLengthCalculator(i, latch);
-            new Thread(lineLengthCalculator).start();
+            LineLengthCalculator lineLengthCalculator = new LineLengthCalculator(i, latch); //creates a new runnable to process a single line
+            new Thread(lineLengthCalculator).start(); //assigns the runnable to a new thread
         }
         try {
-            latch.await();
+            latch.await(); //waits until every line is processed
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -40,8 +40,8 @@ public class LineLengthTransformer {
         }
 
         public void run() {
-            _lines[index] = String.valueOf(_lines[index].length());
-            latch.countDown();
+            _lines[index] = String.valueOf(_lines[index].length()); //sets the string to the length of the string
+            latch.countDown(); //decreases the latch once the line is processed, ensuring that eventually the main thread will start again
         }
     }
 

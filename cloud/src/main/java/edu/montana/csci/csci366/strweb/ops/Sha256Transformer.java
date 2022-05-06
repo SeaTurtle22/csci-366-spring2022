@@ -28,12 +28,12 @@ public class Sha256Transformer {
             executor.execute(sha256Computer); //Adds the runnable to the work pool that the 10 threads will work on. In this case there are a fixed 10 threads.
         }
         try {
-            latch.await();
+            latch.await(); //Waits until every line is hashed to continue
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
 
-        return String.join("\n", _lines);
+        return String.join("\n", _lines); //returns the concatenation of every string in the array, each one on a newline
     }
 
     class Sha256Computer implements Runnable {
@@ -49,23 +49,23 @@ public class Sha256Transformer {
             MessageDigest digest = null;
             try{
                 String originalString = _lines[index];
-                digest = MessageDigest.getInstance("SHA-256");
+                digest = MessageDigest.getInstance("SHA-256"); //creates digest to hash our string later
                 byte[] encodedhash = digest.digest(
                         originalString.getBytes(StandardCharsets.UTF_8)
-                );
-                _lines[index] = bytesToHex(encodedhash);
+                );//Creates a byte array that stores the result of hashing out original string
+                _lines[index] = bytesToHex(encodedhash); //Convert the byte array to a hex string, and store it back to the lines array
             } catch (NoSuchAlgorithmException e) {
                 throw new RuntimeException(e);
             }
-            latch.countDown();
+            latch.countDown(); //Decrements latch to ensure main thread continues once every line is hashed
         }
 
-        private  String bytesToHex(byte[] hash) {
+        private  String bytesToHex(byte[] hash) { //This whole thing converts byte arrays to equivalent hex string.
             StringBuilder hexString = new StringBuilder((2*hash.length));
             for(int i = 0; i < hash.length; i++){
                 String hex = Integer.toHexString(0xff & hash[i]);
                 if(hex.length() == 1) {
-                    hexString.append('0');
+                    hexString.append('0');//Adds leading zero if single digit to maintain overall place-value correctness
                 }
                 hexString.append(hex);
             }
